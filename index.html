@@ -37,11 +37,12 @@
     </main>
   </div>
 
-  <!-- Firebase -->
+  <!-- Firebase (opcional, solo si quieres guardar) -->
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
 
   <script>
+    // Configuración de Firebase (puede fallar, no bloquea nada)
     const firebaseConfig = {
       apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
       authDomain: "plan-bajas.firebaseapp.com",
@@ -51,10 +52,15 @@
       appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
       measurementId: "G-BLRZQEF2M3"
     };
+    let db;
+    try {
+      const app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (e) {
+      console.warn("⚠️ No se pudo inicializar Firebase, modo local activado");
+    }
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
+    // TAREAS LOCALES (se muestran siempre)
     let tasksData = [
       {id:1, description:"Elaborar estudio de obsolescencia ARC 221", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
       {id:2, description:"Elaborar estudio de obsolescencia ARC 414", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
@@ -68,6 +74,7 @@
       {id:10, description:"Ejecución del proceso de chatarrización ARC 414", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"}
     ];
 
+    // Mostrar tabla
     function renderTable() {
       const tbody = document.getElementById('task-table-body');
       tbody.innerHTML = "";
@@ -97,7 +104,12 @@
       });
     }
 
+    // Guardar en Firestore (solo si está disponible)
     async function saveTasksToFirestore() {
+      if (!db) {
+        alert("⚠️ No se pudo conectar a la nube (modo local activo)");
+        return;
+      }
       try {
         const colRef = db.collection("tasks");
         const snapshot = await colRef.get();
@@ -115,26 +127,8 @@
       }
     }
 
-    async function loadTasksFromFirestore() {
-      try {
-        const colRef = db.collection("tasks");
-        const snapshot = await colRef.get();
-        if (!snapshot.empty) {
-          tasksData = [];
-          snapshot.forEach(doc => tasksData.push(doc.data()));
-        } else {
-          // si está vacío, subir las tareas iniciales
-          await saveTasksToFirestore();
-        }
-      } catch (e) {
-        console.warn("⚠️ No se pudo conectar a Firestore, usando tareas locales", e);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      renderTable();               // primero muestra tareas locales
-      await loadTasksFromFirestore(); // luego intenta cargar Firestore
-      renderTable();               // vuelve a pintar por si cargó desde Firestore
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTable();
       document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
     });
   </script>
