@@ -1,147 +1,143 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Plan de Bajas de Aeronaves</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-<div class="container mx-auto p-4 md:p-8">
-  <header class="text-center mb-8">
-    <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Plan de Bajas de Aeronaves</h1>
-    <p class="text-gray-600 mt-2">División de Ingeniería y Confiabilidad</p>
-    <div class="flex flex-wrap justify-center mt-4 space-x-4">
-      <button id="save-cloud-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">Guardar en la Nube</button>
-    </div>
-  </header>
+  <div class="container mx-auto p-4 md:p-8">
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Plan de Bajas de Aeronaves</h1>
+      <p class="text-gray-600 mt-2">División de Ingeniería y Confiabilidad</p>
+      <div class="flex justify-center mt-4">
+        <button id="save-cloud-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+          Guardar en la Nube
+        </button>
+      </div>
+    </header>
 
-  <main class="bg-white p-6 rounded-lg shadow">
-    <h2 class="text-2xl font-bold mb-4">Tareas</h2>
-    <div class="overflow-x-auto">
-      <table class="min-w-full">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="px-4 py-2 text-left">Actividad</th>
-            <th class="px-4 py-2 text-left">Responsable</th>
-            <th class="px-4 py-2 text-left">Plazo</th>
-            <th class="px-4 py-2 text-left">Estado</th>
-          </tr>
-        </thead>
-        <tbody id="task-table-body"></tbody>
-      </table>
-    </div>
-  </main>
-</div>
+    <main class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-2xl font-bold mb-4">Tareas</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left">Actividad</th>
+              <th class="px-4 py-2 text-left">Responsable</th>
+              <th class="px-4 py-2 text-left">Plazo</th>
+              <th class="px-4 py-2 text-left">Estado</th>
+            </tr>
+          </thead>
+          <tbody id="task-table-body"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
 
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
-    authDomain: "plan-bajas.firebaseapp.com",
-    projectId: "plan-bajas",
-    storageBucket: "plan-bajas.appspot.com",
-    messagingSenderId: "497050728679",
-    appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
-    measurementId: "G-BLRZQEF2M3"
-  };
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
+      authDomain: "plan-bajas.firebaseapp.com",
+      projectId: "plan-bajas",
+      storageBucket: "plan-bajas.appspot.com",
+      messagingSenderId: "497050728679",
+      appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
+      measurementId: "G-BLRZQEF2M3"
+    };
 
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  let tasksData = [
-    {id:1, description:"Elaborar estudio de obsolescencia ARC 221", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
-    {id:2, description:"Elaborar estudio de obsolescencia ARC 414", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
-    {id:3, description:"Elaborar concepto técnico de baja ARC 221", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
-    {id:4, description:"Elaborar concepto técnico de baja ARC 414", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
-    {id:5, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 221", responsible:"DIMAV", deadline:"2024-08-05", status:"En Progreso"},
-    {id:6, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 414", responsible:"DIMAV", deadline:"2024-08-05", status:"Pendiente"},
-    {id:7, description:"Aprobación de baja ARC 221", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
-    {id:8, description:"Aprobación de baja ARC 414", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
-    {id:9, description:"Ejecución del proceso de chatarrización ARC 221", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"},
-    {id:10, description:"Ejecución del proceso de chatarrización ARC 414", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"}
-  ];
+    let tasksData = [
+      {id:1, description:"Elaborar estudio de obsolescencia ARC 221", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
+      {id:2, description:"Elaborar estudio de obsolescencia ARC 414", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
+      {id:3, description:"Elaborar concepto técnico de baja ARC 221", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
+      {id:4, description:"Elaborar concepto técnico de baja ARC 414", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
+      {id:5, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 221", responsible:"DIMAV", deadline:"2024-08-05", status:"En Progreso"},
+      {id:6, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 414", responsible:"DIMAV", deadline:"2024-08-05", status:"Pendiente"},
+      {id:7, description:"Aprobación de baja ARC 221", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
+      {id:8, description:"Aprobación de baja ARC 414", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
+      {id:9, description:"Ejecución del proceso de chatarrización ARC 221", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"},
+      {id:10, description:"Ejecución del proceso de chatarrización ARC 414", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"}
+    ];
 
-  async function initializeFirestoreIfEmpty() {
-    const colRef = db.collection("tasks");
-    const snapshot = await colRef.get();
-    if (!snapshot.empty) return;
-    const batch = db.batch();
-    tasksData.forEach(task => {
-      const ref = colRef.doc(String(task.id));
-      batch.set(ref, task);
-    });
-    await batch.commit();
-  }
-
-  async function loadTasksFromFirestore() {
-    const colRef = db.collection("tasks");
-    const snapshot = await colRef.get();
-    tasksData = [];
-    snapshot.forEach(doc => tasksData.push(doc.data()));
-  }
-
-  async function saveTasksToFirestore() {
-    const colRef = db.collection("tasks");
-    const snapshot = await colRef.get();
-    const batch = db.batch();
-    snapshot.forEach(doc => batch.delete(doc.ref));
-    tasksData.forEach(task => {
-      const ref = colRef.doc(String(task.id));
-      batch.set(ref, task);
-    });
-    await batch.commit();
-    alert("✅ Cambios guardados en la nube");
-  }
-
-  function renderTable() {
-    const tbody = document.getElementById('task-table-body');
-    tbody.innerHTML = "";
-    tasksData.forEach(task => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td class="px-4 py-2">${task.description}</td>
-        <td class="px-4 py-2">${task.responsible}</td>
-        <td class="px-4 py-2">${task.deadline}</td>
-        <td class="px-4 py-2">
-          <select data-id="${task.id}" class="border rounded p-1">
-            <option ${task.status==='Pendiente'?'selected':''}>Pendiente</option>
-            <option ${task.status==='En Progreso'?'selected':''}>En Progreso</option>
-            <option ${task.status==='Completado'?'selected':''}>Completado</option>
-          </select>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-
-    document.querySelectorAll('select[data-id]').forEach(sel => {
-      sel.addEventListener('change', e => {
-        const id = parseInt(e.target.dataset.id);
-        const t = tasksData.find(x => x.id === id);
-        if (t) t.status = e.target.value;
+    function renderTable() {
+      const tbody = document.getElementById('task-table-body');
+      tbody.innerHTML = "";
+      tasksData.forEach(task => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="px-4 py-2">${task.description}</td>
+          <td class="px-4 py-2">${task.responsible}</td>
+          <td class="px-4 py-2">${task.deadline}</td>
+          <td class="px-4 py-2">
+            <select data-id="${task.id}" class="border rounded p-1">
+              <option ${task.status==='Pendiente'?'selected':''}>Pendiente</option>
+              <option ${task.status==='En Progreso'?'selected':''}>En Progreso</option>
+              <option ${task.status==='Completado'?'selected':''}>Completado</option>
+            </select>
+          </td>
+        `;
+        tbody.appendChild(tr);
       });
-    });
-  }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      await initializeFirestoreIfEmpty();
-      await loadTasksFromFirestore();
-      if (tasksData.length === 0) {
-        console.warn("⚠️ Firestore vacío, usando tareas locales");
-      }
-    } catch (e) {
-      console.error("⚠️ No se pudo conectar a Firestore, mostrando tareas locales", e);
+      document.querySelectorAll('select[data-id]').forEach(sel => {
+        sel.addEventListener('change', e => {
+          const id = parseInt(e.target.dataset.id);
+          const t = tasksData.find(x => x.id === id);
+          if (t) t.status = e.target.value;
+        });
+      });
     }
-    renderTable();
-    document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
-  });
-</script>
+
+    async function saveTasksToFirestore() {
+      try {
+        const colRef = db.collection("tasks");
+        const snapshot = await colRef.get();
+        const batch = db.batch();
+        snapshot.forEach(doc => batch.delete(doc.ref));
+        tasksData.forEach(task => {
+          const ref = colRef.doc(String(task.id));
+          batch.set(ref, task);
+        });
+        await batch.commit();
+        alert("✅ Cambios guardados en la nube");
+      } catch (e) {
+        console.error("❌ Error guardando en Firestore", e);
+        alert("⚠️ No se pudo guardar en la nube");
+      }
+    }
+
+    async function loadTasksFromFirestore() {
+      try {
+        const colRef = db.collection("tasks");
+        const snapshot = await colRef.get();
+        if (!snapshot.empty) {
+          tasksData = [];
+          snapshot.forEach(doc => tasksData.push(doc.data()));
+        } else {
+          // si está vacío, subir las tareas iniciales
+          await saveTasksToFirestore();
+        }
+      } catch (e) {
+        console.warn("⚠️ No se pudo conectar a Firestore, usando tareas locales", e);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      renderTable();               // primero muestra tareas locales
+      await loadTasksFromFirestore(); // luego intenta cargar Firestore
+      renderTable();               // vuelve a pintar por si cargó desde Firestore
+      document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
+    });
+  </script>
 
 </body>
 </html>
