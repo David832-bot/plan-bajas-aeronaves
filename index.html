@@ -1,137 +1,924 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Plan de Bajas de Aeronaves</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan de Acción Bajas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+            max-height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 250px;
+            }
+        }
+        .gantt-container {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            max-height: 800px;
+        }
+        .box-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .box {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .participant-card {
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        .participant-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transform: translateY(-5px);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto;
+            position: relative;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+        @keyframes highlight {
+            from { background-color: #e5e7eb; }
+            to { background-color: #ffffff; }
+        }
+        .highlight {
+            animation: highlight 0.5s ease-in-out;
+        }
+        .comment-field {
+            min-width: 150px;
+            min-height: 50px;
+        }
+        .table-cell-content {
+            white-space: normal;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <div class="container mx-auto p-4 md:p-8">
-    <header class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Plan de Bajas de Aeronaves</h1>
-      <p class="text-gray-600 mt-2">División de Ingeniería y Confiabilidad</p>
-      <div class="flex justify-center mt-4">
-        <button id="save-cloud-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
-          Guardar en la Nube
-        </button>
-      </div>
-    </header>
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8 relative">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Plan de Bajas de Aeronaves</h1>
+            <p class="text-gray-600 mt-2">División de Ingeniería y Confiabilidad</p>
+            <div class="flex justify-center mt-4 space-x-4">
+                <button id="generate-pdf-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+                    Generar Informe Completo
+                </button>
+                <button id="modify-schedule-btn" class="px-6 py-2 bg-yellow-500 text-white rounded-lg shadow hover:bg-yellow-600 transition">
+                    Modificar Cronograma
+                </button>
+                <button id="save-progress-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700 transition">
+                    Guardar Progreso (local)
+                </button>
+                <button id="save-cloud-btn" class="px-6 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition">
+                    Guardar en la Nube
+                </button>
+            </div>
+        </header>
 
-    <main class="bg-white p-6 rounded-lg shadow">
-      <h2 class="text-2xl font-bold mb-4">Tareas</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-4 py-2 text-left">Actividad</th>
-              <th class="px-4 py-2 text-left">Responsable</th>
-              <th class="px-4 py-2 text-left">Plazo</th>
-              <th class="px-4 py-2 text-left">Estado</th>
-            </tr>
-          </thead>
-          <tbody id="task-table-body"></tbody>
-        </table>
-      </div>
-    </main>
-  </div>
+        <main id="main-content">
+            <section id="summary" class="mb-8 p-6 bg-white rounded-lg shadow-md">
+                <h2 class="text-2xl font-bold mb-4 text-center">Resumen del Proceso</h2>
+                <p class="text-center text-gray-600 mb-6">Esta sección proporciona una vista general del estado de las actividades para la baja de las aeronaves ARC 414 y ARC 221. Los cuadros de control se actualizan automáticamente.</p>
+                
+                <div id="control-boxes" class="box-container mb-8">
+                    <div class="box bg-yellow-100 border-l-4 border-yellow-500">
+                        <p class="text-yellow-700 text-lg">Pendientes</p>
+                        <p id="pending-count" class="text-3xl font-bold text-yellow-500 mt-2">0</p>
+                    </div>
+                    <div class="box bg-blue-100 border-l-4 border-blue-500">
+                        <p class="text-blue-700 text-lg">En Progreso</p>
+                        <p id="progress-count" class="text-3xl font-bold text-blue-500 mt-2">0</p>
+                    </div>
+                    <div class="box bg-green-100 border-l-4 border-green-500">
+                        <p class="text-green-700 text-lg">Completadas</p>
+                        <p id="completed-count" class="text-3xl font-bold text-green-500 mt-2">0</p>
+                    </div>
+                </div>
 
-  <!-- Firebase (opcional, solo si quieres guardar) -->
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+                <div class="flex flex-col gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-2">Estado General de Tareas</h3>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-2">Cronograma General</h3>
+                        <div class="gantt-container">
+                            <canvas id="ganttChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="participant-summary" class="p-6 bg-white rounded-lg shadow-md mb-8">
+                <h2 class="text-2xl font-bold mb-4 text-center">Tareas por Participante</h2>
+                <p class="text-center text-gray-600 mb-6">Aquí puedes ver un resumen de las tareas asignadas a cada miembro del equipo.</p>
+                <div id="participant-summary-container" class="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Las tarjetas de participantes se insertarán aquí dinámicamente -->
+                </div>
+            </section>
 
-  <script>
-    // Configuración de Firebase (puede fallar, no bloquea nada)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
-      authDomain: "plan-bajas.firebaseapp.com",
-      projectId: "plan-bajas",
-      storageBucket: "plan-bajas.appspot.com",
-      messagingSenderId: "497050728679",
-      appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
-      measurementId: "G-BLRZQEF2M3"
-    };
-    let db;
-    try {
-      const app = firebase.initializeApp(firebaseConfig);
-      db = firebase.firestore();
-    } catch (e) {
-      console.warn("⚠️ No se pudo inicializar Firebase, modo local activado");
-    }
+            <section id="tasks" class="p-6 bg-white rounded-lg shadow-md">
+                 <h2 class="text-2xl font-bold mb-4 text-center">Detalle de Actividades</h2>
+                 <p class="text-center text-gray-600 mb-6">Utilice los filtros para explorar los objetivos específicos del plan de acción. Cambie el estado de cualquier tarea directamente en la tabla para actualizar el progreso del proyecto.</p>
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-6">
+                    <button data-filter="all" class="filter-btn bg-blue-600 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-700 transition">Ver Todo</button>
+                    <button data-filter="1" class="filter-btn bg-gray-200 text-gray-800 py-2 px-4 rounded-lg shadow hover:bg-gray-300 transition">ARC 414</button>
+                    <button data-filter="2" class="filter-btn bg-gray-200 text-gray-800 py-2 px-4 rounded-lg shadow hover:bg-gray-300 transition">ARC 221</button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Actividad</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Responsable</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Plazo</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Fecha de Entrega Final</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Estado</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Estado Visual</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Estado de Plazo</th>
+                                <th class="py-3 px-4 text-left font-semibold text-sm">Comentarios</th>
+                            </tr>
+                        </thead>
+                        <tbody id="task-table-body">
+                            <!-- Las filas de la tabla se insertarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
 
-    // TAREAS LOCALES (se muestran siempre)
-    let tasksData = [
-      {id:1, description:"Elaborar estudio de obsolescencia ARC 221", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
-      {id:2, description:"Elaborar estudio de obsolescencia ARC 414", responsible:"DIMAV", deadline:"2024-07-15", status:"Completado"},
-      {id:3, description:"Elaborar concepto técnico de baja ARC 221", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
-      {id:4, description:"Elaborar concepto técnico de baja ARC 414", responsible:"DIMAV", deadline:"2024-07-20", status:"Pendiente"},
-      {id:5, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 221", responsible:"DIMAV", deadline:"2024-08-05", status:"En Progreso"},
-      {id:6, description:"Coordinar recursos o estudio de destinación final con empresa de chatarrización ARC 414", responsible:"DIMAV", deadline:"2024-08-05", status:"Pendiente"},
-      {id:7, description:"Aprobación de baja ARC 221", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
-      {id:8, description:"Aprobación de baja ARC 414", responsible:"COLOGI", deadline:"2024-08-15", status:"Pendiente"},
-      {id:9, description:"Ejecución del proceso de chatarrización ARC 221", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"},
-      {id:10, description:"Ejecución del proceso de chatarrización ARC 414", responsible:"Empresa externa", deadline:"2024-09-01", status:"Pendiente"}
-    ];
+    <div id="pdf-content" class="p-8" style="display:none;"></div>
 
-    // Mostrar tabla
-    function renderTable() {
-      const tbody = document.getElementById('task-table-body');
-      tbody.innerHTML = "";
-      tasksData.forEach(task => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-4 py-2">${task.description}</td>
-          <td class="px-4 py-2">${task.responsible}</td>
-          <td class="px-4 py-2">${task.deadline}</td>
-          <td class="px-4 py-2">
-            <select data-id="${task.id}" class="border rounded p-1">
-              <option ${task.status==='Pendiente'?'selected':''}>Pendiente</option>
-              <option ${task.status==='En Progreso'?'selected':''}>En Progreso</option>
-              <option ${task.status==='Completado'?'selected':''}>Completado</option>
-            </select>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+    <div id="edit-modal" class="modal-overlay hidden">
+        <div class="modal-container">
+            <h3 class="text-xl font-bold mb-4">Modificar Cronograma</h3>
+            <p class="text-sm text-gray-600 mb-4">Edita el contenido de las tareas en el formato JSON. Asegúrate de mantener la estructura correcta para evitar errores.</p>
+            <textarea id="tasks-json-editor" class="w-full h-96 p-2 border rounded-lg font-mono text-sm resize-none"></textarea>
+            <div id="edit-error-message" class="text-red-500 mt-2 hidden"></div>
+            <div class="flex justify-end mt-4 space-x-2">
+                <button id="save-changes-btn" class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">Guardar Cambios</button>
+                <button id="cancel-edit-btn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
-      document.querySelectorAll('select[data-id]').forEach(sel => {
-        sel.addEventListener('change', e => {
-          const id = parseInt(e.target.dataset.id);
-          const t = tasksData.find(x => x.id === id);
-          if (t) t.status = e.target.value;
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js"></script>
+
+    <script>
+        // === Firebase config (storageBucket corregido) ===
+        const firebaseConfig = {
+          apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
+          authDomain: "plan-bajas.firebaseapp.com",
+          projectId: "plan-bajas",
+          storageBucket: "plan-bajas.appspot.com",
+          messagingSenderId: "497050728679",
+          appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
+          measurementId: "G-BLRZQEF2M3"
+        };
+
+        // Inicializar Firebase (si es posible)
+        let db = null;
+        try {
+          const app = firebase.initializeApp(firebaseConfig);
+          db = firebase.firestore();
+          console.log("Firebase inicializado");
+        } catch (e) {
+          console.warn("No se pudo inicializar Firebase. Modo local activo.", e);
+        }
+
+        // === Tus tareas originales (completas, tal como estaban en archivo.txt) ===
+        let tasksData = [
+            { id: 1, objectiveId: 1, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-20'), comment: "" },
+            { id: 2, objectiveId: 1, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-20'), comment: "" },
+            { id: 3, objectiveId: 1, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-25'), comment: "Actividad completada con éxito." },
+            { id: 4, objectiveId: 1, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 3", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-28'), comment: "" },
+            { id: 6, objectiveId: 1, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 5", status: "Completado", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: new Date('2025-06-25'), comment: "Se presentó el informe final." },
+            { id: 7, objectiveId: 1, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 6", status: "Completado", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: new Date('2025-07-28'), comment: "Aprobado por el comité de forma unánime." },
+            { id: 8, objectiveId: 1, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+            { id: 9, objectiveId: 1, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 7", status: "Completado", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-15'), comment: "" },
+            { id: 10, objectiveId: 1, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+            { id: 11, objectiveId: 1, description: "Resolución", responsible: "JEMAT", deadline: "Mes 8", status: "Completado", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-18'), comment: "Se emitió la resolución correspondiente." },
+            { id: 12, objectiveId: 1, description: "Coordinar recursos o estudio de destinación final con la empresa de chatarrización", responsible: "JEMAT", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-22'), comment: "" },
+            { id: 13, objectiveId: 1, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-25'), comment: "" },
+            { id: 14, objectiveId: 1, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-28'), comment: "" },
+            { id: 15, objectiveId: 1, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-29'), comment: "" },
+            
+            { id: 16, objectiveId: 2, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-25'), comment: "" },
+            { id: 17, objectiveId: 2, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-22'), comment: "Concepto técnico emitido." },
+            { id: 18, objectiveId: 2, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 3", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-28'), comment: "" },
+            { id: 19, objectiveId: 2, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 4", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-25'), comment: "" },
+            { id: 20, objectiveId: 2, description: "Solicitud a JNL", responsible: "JEMAT", deadline: "Mes 5", status: "Completado", timeline: [4, 5], deadlineEndDate: new Date('2025-05-31'), finalDeliveryDate: new Date('2025-05-28'), comment: "Solicitud enviada a JNL." },
+            { id: 21, objectiveId: 2, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 6", status: "En Progreso", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: null, comment: "El plan está en desarrollo. Falta la revisión final." },
+            { id: 22, objectiveId: 2, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 7", status: "Pendiente", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: null, comment: "" },
+            { id: 23, objectiveId: 2, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-08-31'), finalDeliveryDate: null, comment: "" },
+            { id: 24, objectiveId: 2, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+            { id: 25, objectiveId: 2, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+            { id: 26, objectiveId: 2, description: "Resolución", responsible: "JEMAT", deadline: "Mes 9", status: "En Progreso", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
+            { id: 27, objectiveId: 2, description: "Coordinación con ENAP para recursos o destinación", responsible: "JEMAT", deadline: "Mes 9", status: "Pendiente", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
+            { id: 28, objectiveId: 2, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 10", status: "En Progreso", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
+            { id: 29, objectiveId: 2, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Pendiente", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
+            { id: 30, objectiveId: 2, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 11", status: "Pendiente", timeline: [11, 12], deadlineEndDate: new Date('2025-12-31'), finalDeliveryDate: null, comment: "" },
+        ];
+        
+        // === Variables UI / charts ===
+        let statusChart, ganttChart;
+        let currentFilter = 'all';
+
+        const statusColors = {
+            'Pendiente': '#FBBF24',
+            'En Progreso': '#3B82F6',
+            'Completado': '#10B981'
+        };
+        
+        const objectiveColors = [
+            'rgba(59, 130, 246, 0.7)',
+            'rgba(239, 68, 68, 0.7)'
+        ];
+
+        const objectiveNames = {
+            1: "ARC 414",
+            2: "ARC 221"
+        };
+
+        // === Firestore helpers ===
+        const convertTaskForFirestore = (task) => {
+            return {
+                ...task,
+                deadlineEndDate: task.deadlineEndDate instanceof Date ? task.deadlineEndDate.toISOString() : task.deadlineEndDate,
+                finalDeliveryDate: task.finalDeliveryDate instanceof Date ? task.finalDeliveryDate.toISOString() : task.finalDeliveryDate
+            };
+        };
+
+        async function replaceFirestoreWithLocal() {
+            if (!db) return;
+            try {
+                const colRef = db.collection("tasks");
+                const snapshot = await colRef.get();
+                const batch = db.batch();
+                snapshot.forEach(doc => batch.delete(doc.ref));
+                tasksData.forEach(task => {
+                    const ref = colRef.doc(String(task.id));
+                    batch.set(ref, convertTaskForFirestore(task));
+                });
+                await batch.commit();
+                console.log("Firestore reemplazado con tareas locales");
+            } catch (e) {
+                console.error("Error al reemplazar Firestore:", e);
+                throw e;
+            }
+        }
+
+        async function loadTasksFromFirestoreOrLocal(replaceOnLoad = true) {
+            // replaceOnLoad: si true, reemplaza contenido de Firestore por local
+            if (!db) {
+                console.warn("Firestore no disponible, usando local");
+                return; // tasksData se queda con local
+            }
+            try {
+                if (replaceOnLoad) {
+                    // borrar y subir local -> garantiza que cloud tenga lo local
+                    await replaceFirestoreWithLocal();
+                }
+                // luego cargar lo que quedó en cloud (garantiza consistencia)
+                const colRef = db.collection("tasks");
+                const snapshot = await colRef.get();
+                if (!snapshot.empty) {
+                    const loaded = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        // reconvertir fechas
+                        if (data.deadlineEndDate) data.deadlineEndDate = new Date(data.deadlineEndDate);
+                        if (data.finalDeliveryDate) data.finalDeliveryDate = data.finalDeliveryDate ? new Date(data.finalDeliveryDate) : null;
+                        loaded.push(data);
+                    });
+                    tasksData = loaded.sort((a,b)=> (a.id||0)-(b.id||0));
+                    console.log("Tareas cargadas desde Firestore");
+                } else {
+                    console.log("Firestore vacío después de reemplazo; se mantienen locales");
+                }
+            } catch (e) {
+                console.warn("Error accediendo a Firestore — usando local", e);
+            }
+        }
+
+        async function saveTasksToFirestore() {
+            if (!db) {
+                alert("⚠️ Firestore no disponible. No se pudo guardar en la nube.");
+                return;
+            }
+            try {
+                const colRef = db.collection("tasks");
+                const snapshot = await colRef.get();
+                const batch = db.batch();
+                snapshot.forEach(doc => batch.delete(doc.ref));
+                tasksData.forEach(task => {
+                    const ref = colRef.doc(String(task.id));
+                    batch.set(ref, convertTaskForFirestore(task));
+                });
+                await batch.commit();
+                alert("✅ Cambios guardados en la nube");
+            } catch (e) {
+                console.error("Error guardando en Firestore:", e);
+                alert("⚠️ Error guardando en la nube");
+            }
+        }
+
+        // === localStorage helpers ===
+        function saveProgressLocal() {
+            const jsonData = JSON.stringify(tasksData, (k, v) => {
+                if (v instanceof Date) return v.toISOString();
+                return v;
+            });
+            localStorage.setItem('tasksData', jsonData);
+            alert('✅ Progreso guardado en este navegador');
+        }
+
+        function loadProgressLocal() {
+            const saved = localStorage.getItem('tasksData');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    parsed.forEach(task => {
+                        if (typeof task.deadlineEndDate === 'string') task.deadlineEndDate = new Date(task.deadlineEndDate);
+                        if (typeof task.finalDeliveryDate === 'string' && task.finalDeliveryDate !== "") {
+                            task.finalDeliveryDate = new Date(task.finalDeliveryDate);
+                        } else {
+                            task.finalDeliveryDate = null;
+                        }
+                    });
+                    tasksData = parsed;
+                    console.log("Progreso local cargado");
+                } catch (e) {
+                    console.error("Error cargando progreso local:", e);
+                }
+            }
+        }
+
+        // === UI helpers (originales) ===
+
+        const getStatusCounts = () => {
+            const counts = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+            tasksData.forEach(task => {
+                counts[task.status] = (counts[task.status] || 0) + 1;
+            });
+            return counts;
+        };
+
+        const getDelayStatus = (task) => {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            let comparisonDate = task.deadlineEndDate;
+
+            if (task.finalDeliveryDate) {
+                comparisonDate = new Date(task.finalDeliveryDate);
+            }
+
+            if (task.status === 'Completado') {
+                return `<span class="text-green-500 font-semibold">A tiempo</span>`;
+            }
+            
+            if (comparisonDate && today > comparisonDate) {
+                return `<span class="text-red-500 font-semibold">Atrasada</span>`;
+            }
+            return `<span class="text-green-500 font-semibold">A tiempo</span>`;
+        };
+
+        const updateControlBoxes = () => {
+            const counts = getStatusCounts();
+            document.getElementById('pending-count').innerText = counts['Pendiente'];
+            document.getElementById('progress-count').innerText = counts['En Progreso'];
+            document.getElementById('completed-count').innerText = counts['Completado'];
+        };
+
+        const groupTasksByResponsible = () => {
+            const summary = {};
+            tasksData.forEach(task => {
+                const names = task.responsible.split(' y '); 
+                names.forEach(name => {
+                    const trimmedName = name.trim();
+                    if (!summary[trimmedName]) {
+                        summary[trimmedName] = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+                    }
+                    summary[trimmedName][task.status] = (summary[trimmedName][task.status] || 0) + 1;
+                });
+            });
+            return summary;
+        };
+
+        const renderParticipantCards = () => {
+            const container = document.getElementById('participant-summary-container');
+            container.innerHTML = '';
+            const groupedTasks = groupTasksByResponsible();
+            
+            for (const name in groupedTasks) {
+                const data = groupedTasks[name];
+                const card = document.createElement('div');
+                card.className = "participant-card p-6 bg-white rounded-lg shadow-md flex flex-col items-center";
+                
+                let content = `
+                    <h4 class="font-bold text-xl mb-4 text-center w-full">${name}</h4>
+                `;
+
+                content += `
+                    <div class="text-sm text-gray-700 w-full text-center">
+                        <p class="font-semibold text-yellow-600">Pendientes: ${data['Pendiente']}</p>
+                        <p class="font-semibold text-blue-600">En Progreso: ${data['En Progreso']}</p>
+                        <p class="font-semibold text-green-600">Completadas: ${data['Completado']}</p>
+                    </div>
+                `;
+                
+                card.innerHTML = content;
+                container.appendChild(card);
+            }
+        };
+
+        const renderTable = () => {
+            const tableBody = document.getElementById('task-table-body');
+            tableBody.innerHTML = '';
+            
+            const filteredTasks = tasksData.filter(task => 
+                currentFilter === 'all' || task.objectiveId == currentFilter
+            );
+
+            filteredTasks.forEach(task => {
+                const row = document.createElement('tr');
+                row.className = 'border-b';
+                
+                const statusSelect = `
+                    <select data-id="${task.id}" class="status-select bg-transparent rounded p-1 border">
+                        <option value="Pendiente" ${task.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                        <option value="En Progreso" ${task.status === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
+                        <option value="Completado" ${task.status === 'Completado' ? 'selected' : ''}>Completado</option>
+                    </select>
+                `;
+                
+                // Formatear la fecha para el input
+                const formattedDate = task.finalDeliveryDate ? (new Date(task.finalDeliveryDate)).toISOString().split('T')[0] : '';
+
+                row.innerHTML = `
+                    <td class="py-3 px-4 table-cell-content">${task.description}</td>
+                    <td class="py-3 px-4 table-cell-content">${task.responsible}</td>
+                    <td class="py-3 px-4 table-cell-content">${task.deadline}</td>
+                    <td class="py-3 px-4 table-cell-content">
+                        <input type="date" value="${formattedDate}" data-id="${task.id}" class="date-input rounded p-1 border">
+                    </td>
+                    <td class="py-3 px-4 table-cell-content">${statusSelect}</td>
+                    <td class="py-3 px-4 table-cell-content"><div class="w-4 h-4 rounded-full" style="background-color: ${statusColors[task.status]}"></div></td>
+                    <td class="py-3 px-4 table-cell-content deadline-status">${getDelayStatus(task)}</td>
+                    <td class="py-3 px-4 table-cell-content"><div contenteditable="true" data-id="${task.id}" class="comment-field rounded p-1 border">${task.comment}</div></td>
+                `;
+                tableBody.appendChild(row);
+            });
+            
+            // Re-adjuntar el event listener a los nuevos elementos
+            document.querySelectorAll('.status-select').forEach(select => {
+                select.addEventListener('change', (e) => {
+                    const taskId = parseInt(e.target.dataset.id);
+                    const newStatus = e.target.value;
+                    const task = tasksData.find(t => t.id === taskId);
+                    
+                    if (task) {
+                        task.status = newStatus;
+                        
+                        renderTable();
+                        
+                        updateControlBoxes();
+                        updateCharts();
+                        renderParticipantCards();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.date-input').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const taskId = parseInt(e.target.dataset.id);
+                    const newDate = e.target.value;
+                    const task = tasksData.find(t => t.id === taskId);
+
+                    if (task) {
+                        task.finalDeliveryDate = newDate ? new Date(newDate) : null;
+                        
+                        renderTable();
+                    }
+                });
+            });
+
+            // Nuevo event listener para la columna de comentarios
+            document.querySelectorAll('.comment-field').forEach(field => {
+                field.addEventListener('blur', (e) => {
+                    const taskId = parseInt(e.target.dataset.id);
+                    const newComment = e.target.innerText;
+                    const task = tasksData.find(t => t.id === taskId);
+
+                    if (task) {
+                        task.comment = newComment;
+                    }
+                });
+            });
+        };
+
+        const createStatusChart = () => {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            const counts = getStatusCounts();
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pendiente', 'En Progreso', 'Completado'],
+                    datasets: [{
+                        data: [counts['Pendiente'], counts['En Progreso'], counts['Completado']],
+                        backgroundColor: [statusColors['Pendiente'], statusColors['En Progreso'], statusColors['Completado']],
+                        borderColor: '#FFFFFF',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        const createGanttChart = () => {
+            const ctx = document.getElementById('ganttChart').getContext('2d');
+            const filteredTasks = tasksData.filter(task => 
+                currentFilter === 'all' || task.objectiveId == currentFilter
+            );
+
+            if (ganttChart) ganttChart.destroy();
+
+            ganttChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: filteredTasks.map(t => {
+                        const words = t.description.split(' ');
+                        const result = [];
+                        let currentLine = '';
+                        words.forEach(word => {
+                            if ((currentLine + ' ' + word).length <= 60) {
+                                currentLine += (currentLine === '' ? '' : ' ') + word;
+                            } else {
+                                result.push(currentLine);
+                                currentLine = word;
+                            }
+                        });
+                        result.push(currentLine);
+                        return result;
+                    }),
+                    datasets: [{
+                        label: 'Meses',
+                        data: filteredTasks.map(t => t.timeline),
+                        backgroundColor: filteredTasks.map(t => objectiveColors[t.objectiveId-1]),
+                        borderColor: 'rgba(255, 255, 255, 1)',
+                        borderWidth: 1,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.8,
+                        borderSkipped: false,
+
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Meses del Año'
+                            },
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value, index) {
+                                    const labels = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                    return labels[Math.floor(value)];
+                                }
+                            }
+                        },
+                        y: {
+                           ticks: {
+                                autoSkip: false,
+                                font: {
+                                    size: 10
+                                }
+                           }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const task = filteredTasks[context.dataIndex];
+                                    return `${task.description} | Plazo: ${task.deadline}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        const updateCharts = () => {
+            if (!statusChart) return;
+            const counts = getStatusCounts();
+            statusChart.data.datasets[0].data = [counts['Pendiente'], counts['En Progreso'], counts['Completado']];
+            statusChart.update();
+
+            const filteredTasks = tasksData.filter(task => 
+                currentFilter === 'all' || task.objectiveId == currentFilter
+            );
+            if (ganttChart) {
+                ganttChart.data.labels = filteredTasks.map(t => {
+                     const words = t.description.split(' ');
+                            const result = [];
+                            let currentLine = '';
+                            words.forEach(word => {
+                                if ((currentLine + ' ' + word).length <= 60) {
+                                    currentLine += (currentLine === '' ? '' : ' ') + word;
+                                } else {
+                                    result.push(currentLine);
+                                    currentLine = word;
+                                }
+                            });
+                            result.push(currentLine);
+                            return result;
+                });
+                ganttChart.data.datasets[0].data = filteredTasks.map(t => t.timeline);
+                ganttChart.data.datasets[0].backgroundColor = filteredTasks.map(t => objectiveColors[t.objectiveId-1]);
+                ganttChart.update();
+            } else {
+                createGanttChart();
+            }
+        };
+
+        const groupTasksByObjective = () => {
+            const grouped = {};
+            tasksData.forEach(task => {
+                const objectiveName = objectiveNames[task.objectiveId];
+                if (!grouped[objectiveName]) {
+                    grouped[objectiveName] = [];
+                }
+                grouped[objectiveName].push(task);
+            });
+            return grouped;
+        };
+
+        const generatePdf = async () => {
+            const button = document.getElementById('generate-pdf-btn');
+            button.disabled = true;
+            button.innerHTML = 'Generando...';
+
+            try {
+                const groupedTasks = groupTasksByObjective();
+                const counts = getStatusCounts();
+
+                const pdfContent = document.getElementById('pdf-content');
+                pdfContent.style.display = 'block';
+
+                let pdfContentHtml = `
+                    <div class="p-8">
+                        <h1 class="text-3xl font-bold mb-6 text-gray-900">Informe Completo del Plan de Bajas</h1>
+                        
+                        <div class="mb-6 p-4 bg-gray-100 rounded-lg">
+                            <h2 class="text-xl font-bold mb-2">Estado General del Proyecto</h2>
+                            <ul class="list-disc pl-5">
+                                <li><span class="font-semibold text-yellow-600">Pendientes:</span> ${counts.Pendiente}</li>
+                                <li><span class="font-semibold text-blue-600">En Progreso:</span> ${counts['En Progreso']}</li>
+                                <li><span class="font-semibold text-green-600">Completadas:</span> ${counts.Completado}</li>
+                            </ul>
+                        </div>
+                `;
+
+                for (const objective in groupedTasks) {
+                    pdfContentHtml += `
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold mb-4">${objective}</h2>
+                            <ul class="list-none pl-0">
+                                ${groupedTasks[objective].map(task => `
+                                    <li class="mb-2 p-3 border rounded-lg bg-white shadow-sm">
+                                        <p class="font-semibold text-gray-800">${task.description}</p>
+                                        <p class="text-sm text-gray-600">Responsable: ${task.responsible}</p>
+                                        <p class="text-sm text-gray-600">Plazo: ${task.deadline}</p>
+                                        <p class="text-sm text-gray-600">Estado: <span class="font-bold" style="color: ${statusColors[task.status]};">${task.status}</span></p>
+                                        ${task.comment ? `<p class="text-sm text-gray-600">Comentario: ${task.comment}</p>` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+
+                pdfContentHtml += `</div>`;
+                pdfContent.innerHTML = pdfContentHtml;
+                
+                const canvas = await html2canvas(pdfContent, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210; 
+                const pageHeight = 297; 
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                pdf.save('Informe_Completo_Plan_Bajas.pdf');
+
+            } catch (error) {
+                console.error("Error al generar el PDF:", error);
+                alert("⚠️ Error generando PDF");
+            } finally {
+                document.getElementById('pdf-content').style.display = 'none';
+                button.disabled = false;
+                button.innerHTML = 'Generar Informe Completo';
+            }
+        };
+
+        // === Modal JSON editor helpers ===
+        function openEditModal() {
+            const editModal = document.getElementById('edit-modal');
+            const tasksJsonEditor = document.getElementById('tasks-json-editor');
+            const editErrorMessage = document.getElementById('edit-error-message');
+            tasksJsonEditor.value = JSON.stringify(tasksData, (key, value) => {
+                if (value instanceof Date) {
+                    return value.toISOString().split('T')[0];
+                }
+                return value;
+            }, 2);
+            editErrorMessage.classList.add('hidden');
+            editModal.classList.remove('hidden');
+        }
+
+        function closeEditModal() {
+            const editModal = document.getElementById('edit-modal');
+            editModal.classList.add('hidden');
+        }
+
+        // === DOMContentLoaded ===
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Cargar progreso local si existe (prioritario)
+            loadProgressLocal();
+
+            // Mostrar inmediatamente las tareas locales para evitar pantalla en blanco
+            renderTable();
+            updateControlBoxes();
+            createStatusChart();
+            createGanttChart();
+            renderParticipantCards();
+
+            // Intentar sincronizar con Firestore y reemplazar la nube con local (según tu instrucción)
+            try {
+                await loadTasksFromFirestoreOrLocal(true); // true => reemplaza en la nube con local
+                // después de sincronizar, vuelve a renderizar con los datos que quedaron en tasksData
+                renderTable();
+                updateControlBoxes();
+                updateCharts();
+                renderParticipantCards();
+            } catch (e) {
+                console.warn("No se pudo sincronizar completamente con Firestore. Se mantienen datos locales.", e);
+            }
+
+            // Filtros
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    currentFilter = e.target.dataset.filter;
+                    
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('bg-blue-600', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-800');
+                    });
+                    
+                    e.target.classList.remove('bg-gray-200', 'text-gray-800');
+                    e.target.classList.add('bg-blue-600', 'text-white');
+                    
+                    renderTable();
+                    updateCharts();
+                });
+            });
+
+            // Botones
+            document.getElementById('generate-pdf-btn').addEventListener('click', generatePdf);
+            document.getElementById('modify-schedule-btn').addEventListener('click', openEditModal);
+            document.getElementById('save-progress-btn').addEventListener('click', saveProgressLocal);
+            document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
+
+            // Modal actions
+            document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+            document.getElementById('save-changes-btn').addEventListener('click', () => {
+                const tasksJsonEditor = document.getElementById('tasks-json-editor');
+                const editErrorMessage = document.getElementById('edit-error-message');
+                try {
+                    const newTasksData = JSON.parse(tasksJsonEditor.value);
+                    tasksData = newTasksData;
+                    
+                    tasksData.forEach(task => {
+                        if (typeof task.deadlineEndDate === 'string') {
+                            task.deadlineEndDate = new Date(task.deadlineEndDate);
+                        }
+                         if (typeof task.finalDeliveryDate === 'string' && task.finalDeliveryDate !== "") {
+                            task.finalDeliveryDate = new Date(task.finalDeliveryDate);
+                        } else {
+                            task.finalDeliveryDate = null;
+                        }
+                    });
+
+                    updateControlBoxes();
+                    updateCharts();
+                    renderParticipantCards();
+                    renderTable();
+                    closeEditModal();
+
+                } catch (e) {
+                    editErrorMessage.innerText = "Error: El formato JSON no es válido. Por favor, revisa la sintaxis (comillas, comas, corchetes).";
+                    editErrorMessage.classList.remove('hidden');
+                    console.error("Error parsing JSON:", e);
+                }
+            });
         });
-      });
-    }
-
-    // Guardar en Firestore (solo si está disponible)
-    async function saveTasksToFirestore() {
-      if (!db) {
-        alert("⚠️ No se pudo conectar a la nube (modo local activo)");
-        return;
-      }
-      try {
-        const colRef = db.collection("tasks");
-        const snapshot = await colRef.get();
-        const batch = db.batch();
-        snapshot.forEach(doc => batch.delete(doc.ref));
-        tasksData.forEach(task => {
-          const ref = colRef.doc(String(task.id));
-          batch.set(ref, task);
-        });
-        await batch.commit();
-        alert("✅ Cambios guardados en la nube");
-      } catch (e) {
-        console.error("❌ Error guardando en Firestore", e);
-        alert("⚠️ No se pudo guardar en la nube");
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      renderTable();
-      document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
-    });
-  </script>
-
+    </script>
 </body>
 </html>
