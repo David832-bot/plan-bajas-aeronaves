@@ -920,5 +920,84 @@
             });
         });
     </script>
+    <script>
+  const listaTareas = [
+    { actividad: "Estudios de obsolescencia ARC 414", responsable: "DIMAV", plazo: "2025-01-31", estado: "Completado" },
+    { actividad: "Concepto técnico de baja ARC 414", responsable: "DIMAV", plazo: "2025-02-28", estado: "Completado" },
+    { actividad: "Destinación final ARC 414", responsable: "DIMAV", plazo: "2025-03-31", estado: "Completado" },
+    { actividad: "Consolidado con JEMAT ARC 414", responsable: "JEMAT", plazo: "2025-04-30", estado: "Completado" },
+    { actividad: "Plan de desmantelamiento ARC 414", responsable: "DIMAV", plazo: "2025-06-30", estado: "Completado" },
+    { actividad: "Comité de bajas ARC 414", responsable: "JEMAT", plazo: "2025-07-31", estado: "Completado" },
+    { actividad: "Acta de comité de baja ARC 414", responsable: "DIMAV", plazo: "2025-09-30", estado: "Pendiente" },
+    { actividad: "Efectuar baja de inventario de elementos obsoletos ARC 414", responsable: "DIMAV", plazo: "2025-09-30", estado: "Completado" },
+    { actividad: "Entrega de unidad al ordenador del gasto ARC 414", responsable: "JEMAT", plazo: "2025-09-30", estado: "Pendiente" },
+    { actividad: "Resolución ARC 414", responsable: "JEMAT", plazo: "2025-09-30", estado: "Completado" },
+    { actividad: "Coordinar recursos o estudio de destinación final con la empresa de chatarrización ARC 414", responsable: "JEMAT", plazo: "2025-09-30", estado: "Completado" },
+    { actividad: "Coordinación con Oficina de Historia ARC 414", responsable: "DIMAV", plazo: "2025-09-30", estado: "Completado" },
+    { actividad: "Salida del SAP ARC 414", responsable: "DIMAV", plazo: "2025-09-30", estado: "Completado" },
+    { actividad: "Acta de cumplimiento de destinación final ARC 414", responsable: "DIMAV", plazo: "2025-09-30", estado: "Completado" },
+
+    { actividad: "Estudios de obsolescencia ARC 221", responsable: "DIMAV", plazo: "2025-01-31", estado: "Completado" },
+    { actividad: "Concepto técnico de baja ARC 221", responsable: "DIMAV", plazo: "2025-02-28", estado: "Completado" },
+    { actividad: "Destinación final ARC 221", responsable: "DIMAV", plazo: "2025-03-31", estado: "Completado" },
+    { actividad: "Consolidado con JEMAT ARC 221", responsable: "JEMAT", plazo: "2025-04-30", estado: "Completado" },
+    { actividad: "Solicitud a JNL ARC 221", responsable: "JEMAT", plazo: "2025-05-31", estado: "Completado" },
+    { actividad: "Plan de desmantelamiento ARC 221", responsable: "DIMAV", plazo: "2025-06-30", estado: "En Progreso" },
+    { actividad: "Comité de bajas ARC 221", responsable: "JEMAT", plazo: "2025-07-31", estado: "Pendiente" },
+    { actividad: "Acta de comité de baja ARC 221", responsable: "DIMAV", plazo: "2025-08-31", estado: "Pendiente" },
+    { actividad: "Efectuar baja de inventario de elementos obsoletos ARC 221", responsable: "DIMAV", plazo: "2025-09-30", estado: "Pendiente" },
+    { actividad: "Entrega de unidad al ordenador del gasto ARC 221", responsable: "JEMAT", plazo: "2025-09-30", estado: "Pendiente" },
+    { actividad: "Resolución ARC 221", responsable: "JEMAT", plazo: "2025-10-31", estado: "En Progreso" },
+    { actividad: "Coordinación con ENAP para recursos o destinación ARC 221", responsable: "JEMAT", plazo: "2025-10-31", estado: "Pendiente" },
+    { actividad: "Coordinación con Oficina de Historia ARC 221", responsable: "DIMAV", plazo: "2025-11-30", estado: "En Progreso" },
+    { actividad: "Salida del SAP ARC 221", responsable: "DIMAV", plazo: "2025-11-30", estado: "Pendiente" },
+    { actividad: "Acta de cumplimiento de destinación final ARC 221", responsable: "DIMAV", plazo: "2025-12-31", estado: "Pendiente" }
+  ];
+</script>
+
+    <!-- Firebase y Firestore -->
+<script type="module">
+  // Importar librerías de Firebase
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // Configuración de Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
+    authDomain: "plan-bajas.firebaseapp.com",
+    projectId: "plan-bajas",
+    storageBucket: "plan-bajas.firebasestorage.app",
+    messagingSenderId: "497050728679",
+    appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
+    measurementId: "G-BLRZQEF2M3"
+  };
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // Esta función guarda todas las tareas en la colección "tareas"
+  async function guardarEnLaNube(tareas) {
+    try {
+      const tareasRef = collection(db, "tareas");
+      for (const tarea of tareas) {
+        await addDoc(tareasRef, tarea);
+      }
+      alert("✅ Tareas guardadas en la nube");
+    } catch (e) {
+      console.error("Error al guardar: ", e);
+      alert("❌ No se pudo guardar en la nube");
+    }
+  }
+
+  // Asignar evento al botón
+  document.getElementById("guardarNube").addEventListener("click", () => {
+    // listaTareas debe ser tu arreglo con todas las tareas actuales
+    guardarEnLaNube(listaTareas);
+  });
+</script>
 </body>
 </html>
+
