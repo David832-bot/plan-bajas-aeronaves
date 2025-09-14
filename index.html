@@ -122,349 +122,343 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
-    <script>
-        // === Configuración de Firebase ===
-        const firebaseConfig = {
-          apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
-          authDomain: "plan-bajas.firebaseapp.com",
-          projectId: "plan-bajas",
-          storageBucket: "plan-bajas.appspot.com", // Usar el .appspot.com
-          messagingSenderId: "497050728679",
-          appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
-          measurementId: "G-BLRZQEF2M3"
-        };
+<script>
+    // === Configuración de Firebase ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyBhmQ3wyBZJ5liaX6HtJ_YDp_5e73BgBMo",
+      authDomain: "plan-bajas.firebaseapp.com",
+      projectId: "plan-bajas",
+      storageBucket: "plan-bajas.appspot.com", // Usar el .appspot.com
+      messagingSenderId: "497050728679",
+      appId: "1:497050728679:web:9bf5a74512c3d6a0a40a42",
+      measurementId: "G-BLRZQEF2M3"
+    };
 
-        // Inicializar Firebase
-        let db = null;
+    // Inicializar Firebase
+    let db = null;
+    try {
+      const app = firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+      console.log("Firebase inicializado correctamente.");
+    } catch (e) {
+      console.warn("No se pudo inicializar Firebase. El guardado en la nube no funcionará.", e);
+    }
+
+    // === Datos de las Tareas ===
+    let tasksData = [
+        { id: 1, objectiveId: 1, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-20'), comment: "" },
+        { id: 2, objectiveId: 1, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-20'), comment: "" },
+        { id: 3, objectiveId: 1, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-25'), comment: "Actividad completada con éxito." },
+        { id: 4, objectiveId: 1, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 3", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-28'), comment: "" },
+        { id: 6, objectiveId: 1, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 5", status: "Completado", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: new Date('2025-06-25'), comment: "Se presentó el informe final." },
+        { id: 7, objectiveId: 1, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 6", status: "Completado", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: new Date('2025-07-28'), comment: "Aprobado por el comité de forma unánime." },
+        { id: 8, objectiveId: 1, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+        { id: 9, objectiveId: 1, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 7", status: "Completado", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-15'), comment: "" },
+        { id: 10, objectiveId: 1, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+        { id: 11, objectiveId: 1, description: "Resolución", responsible: "JEMAT", deadline: "Mes 8", status: "Completado", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-18'), comment: "Se emitió la resolución correspondiente." },
+        { id: 12, objectiveId: 1, description: "Coordinar recursos o estudio de destinación final con la empresa de chatarrización", responsible: "JEMAT", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-22'), comment: "" },
+        { id: 13, objectiveId: 1, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-25'), comment: "" },
+        { id: 14, objectiveId: 1, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-28'), comment: "" },
+        { id: 15, objectiveId: 1, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-29'), comment: "" },
+        { id: 16, objectiveId: 2, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-25'), comment: "" },
+        { id: 17, objectiveId: 2, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-22'), comment: "Concepto técnico emitido." },
+        { id: 18, objectiveId: 2, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 3", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-28'), comment: "" },
+        { id: 19, objectiveId: 2, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 4", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-25'), comment: "" },
+        { id: 20, objectiveId: 2, description: "Solicitud a JNL", responsible: "JEMAT", deadline: "Mes 5", status: "Completado", timeline: [4, 5], deadlineEndDate: new Date('2025-05-31'), finalDeliveryDate: new Date('2025-05-28'), comment: "Solicitud enviada a JNL." },
+        { id: 21, objectiveId: 2, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 6", status: "En Progreso", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: null, comment: "El plan está en desarrollo. Falta la revisión final." },
+        { id: 22, objectiveId: 2, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 7", status: "Pendiente", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: null, comment: "" },
+        { id: 23, objectiveId: 2, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-08-31'), finalDeliveryDate: null, comment: "" },
+        { id: 24, objectiveId: 2, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+        { id: 25, objectiveId: 2, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
+        { id: 26, objectiveId: 2, description: "Resolución", responsible: "JEMAT", deadline: "Mes 9", status: "En Progreso", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
+        { id: 27, objectiveId: 2, description: "Coordinación con ENAP para recursos o destinación", responsible: "JEMAT", deadline: "Mes 9", status: "Pendiente", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
+        { id: 28, objectiveId: 2, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 10", status: "En Progreso", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
+        { id: 29, objectiveId: 2, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Pendiente", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
+        { id: 30, objectiveId: 2, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 11", status: "Pendiente", timeline: [11, 12], deadlineEndDate: new Date('2025-12-31'), finalDeliveryDate: null, comment: "" },
+    ];
+
+    // === Variables UI y de Gráficos ===
+    let statusChart, ganttChart;
+    let currentFilter = 'all';
+
+    const statusColors = { 'Pendiente': '#FBBF24', 'En Progreso': '#3B82F6', 'Completado': '#10B981' };
+    const objectiveColors = [ 'rgba(59, 130, 246, 0.7)', 'rgba(239, 68, 68, 0.7)' ];
+    const objectiveNames = { 1: "ARC 414", 2: "ARC 221" };
+
+    // === Funciones de Lógica (Firestore, LocalStorage, UI) ===
+
+    const convertTaskForFirestore = (task) => {
+        return {
+            ...task,
+            deadlineEndDate: task.deadlineEndDate instanceof Date ? task.deadlineEndDate.toISOString() : task.deadlineEndDate,
+            finalDeliveryDate: task.finalDeliveryDate instanceof Date ? task.finalDeliveryDate.toISOString() : task.finalDeliveryDate
+        };
+    };
+    
+    async function saveTasksToFirestore() {
+        if (!db) {
+            alert("⚠️ Error: Firebase no está inicializado. No se puede guardar en la nube.");
+            return;
+        }
+        const button = document.getElementById('save-cloud-btn');
+        button.disabled = true;
+        button.innerText = "Guardando...";
+
         try {
-          const app = firebase.initializeApp(firebaseConfig);
-          db = firebase.firestore();
-          console.log("Firebase inicializado correctamente.");
+            const batch = db.batch();
+            const colRef = db.collection("tasks");
+            const snapshot = await colRef.get();
+            snapshot.forEach(doc => batch.delete(doc.ref));
+            tasksData.forEach(task => {
+                const docRef = colRef.doc(String(task.id));
+                batch.set(docRef, convertTaskForFirestore(task));
+            });
+            await batch.commit();
+            alert("✅ ¡Éxito! El progreso ha sido guardado en la nube.");
         } catch (e) {
-          console.warn("No se pudo inicializar Firebase. El guardado en la nube no funcionará.", e);
+            console.error("Error al guardar en Firestore:", e);
+            alert("❌ Error al guardar en la nube. Revisa la consola para más detalles.");
+        } finally {
+            button.disabled = false;
+            button.innerText = "Guardar en la Nube";
         }
+    }
 
-        // === Datos de las Tareas ===
-        let tasksData = [
-            { id: 1, objectiveId: 1, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-20'), comment: "" },
-            { id: 2, objectiveId: 1, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-20'), comment: "" },
-            { id: 3, objectiveId: 1, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-25'), comment: "Actividad completada con éxito." },
-            { id: 4, objectiveId: 1, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 3", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-28'), comment: "" },
-            { id: 6, objectiveId: 1, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 5", status: "Completado", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: new Date('2025-06-25'), comment: "Se presentó el informe final." },
-            { id: 7, objectiveId: 1, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 6", status: "Completado", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: new Date('2025-07-28'), comment: "Aprobado por el comité de forma unánime." },
-            { id: 8, objectiveId: 1, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
-            { id: 9, objectiveId: 1, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 7", status: "Completado", timeline: [7, 8], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-15'), comment: "" },
-            { id: 10, objectiveId: 1, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
-            { id: 11, objectiveId: 1, description: "Resolución", responsible: "JEMAT", deadline: "Mes 8", status: "Completado", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-18'), comment: "Se emitió la resolución correspondiente." },
-            { id: 12, objectiveId: 1, description: "Coordinar recursos o estudio de destinación final con la empresa de chatarrización", responsible: "JEMAT", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-22'), comment: "" },
-            { id: 13, objectiveId: 1, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 9", status: "Completado", timeline: [9, 10], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-25'), comment: "" },
-            { id: 14, objectiveId: 1, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-28'), comment: "" },
-            { id: 15, objectiveId: 1, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 10", status: "Completado", timeline: [10, 11], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: new Date('2025-09-29'), comment: "" },
-            { id: 16, objectiveId: 2, description: "Estudios de obsolescencia", responsible: "DIMAV", deadline: "Mes 1", status: "Completado", timeline: [0, 1], deadlineEndDate: new Date('2025-01-31'), finalDeliveryDate: new Date('2025-01-25'), comment: "" },
-            { id: 17, objectiveId: 2, description: "Concepto técnico de baja", responsible: "DIMAV", deadline: "Mes 2", status: "Completado", timeline: [1, 2], deadlineEndDate: new Date('2025-02-28'), finalDeliveryDate: new Date('2025-02-22'), comment: "Concepto técnico emitido." },
-            { id: 18, objectiveId: 2, description: "Destinación final", responsible: "DIMAV", deadline: "Mes 3", status: "Completado", timeline: [2, 3], deadlineEndDate: new Date('2025-03-31'), finalDeliveryDate: new Date('2025-03-28'), comment: "" },
-            { id: 19, objectiveId: 2, description: "Consolidado con JEMAT", responsible: "JEMAT", deadline: "Mes 4", status: "Completado", timeline: [3, 4], deadlineEndDate: new Date('2025-04-30'), finalDeliveryDate: new Date('2025-04-25'), comment: "" },
-            { id: 20, objectiveId: 2, description: "Solicitud a JNL", responsible: "JEMAT", deadline: "Mes 5", status: "Completado", timeline: [4, 5], deadlineEndDate: new Date('2025-05-31'), finalDeliveryDate: new Date('2025-05-28'), comment: "Solicitud enviada a JNL." },
-            { id: 21, objectiveId: 2, description: "Plan de desmantelamiento", responsible: "DIMAV", deadline: "Mes 6", status: "En Progreso", timeline: [5, 6], deadlineEndDate: new Date('2025-06-30'), finalDeliveryDate: null, comment: "El plan está en desarrollo. Falta la revisión final." },
-            { id: 22, objectiveId: 2, description: "Comité de bajas", responsible: "JEMAT", deadline: "Mes 7", status: "Pendiente", timeline: [6, 7], deadlineEndDate: new Date('2025-07-31'), finalDeliveryDate: null, comment: "" },
-            { id: 23, objectiveId: 2, description: "Acta de comité de baja", responsible: "DIMAV", deadline: "Mes 7", status: "Pendiente", timeline: [7, 8], deadlineEndDate: new Date('2025-08-31'), finalDeliveryDate: null, comment: "" },
-            { id: 24, objectiveId: 2, description: "Efectuar baja de inventario de elementos obsoletos", responsible: "DIMAV", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
-            { id: 25, objectiveId: 2, description: "Entrega de unidad al ordenador del gasto", responsible: "JEMAT", deadline: "Mes 8", status: "Pendiente", timeline: [8, 9], deadlineEndDate: new Date('2025-09-30'), finalDeliveryDate: null, comment: "" },
-            { id: 26, objectiveId: 2, description: "Resolución", responsible: "JEMAT", deadline: "Mes 9", status: "En Progreso", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
-            { id: 27, objectiveId: 2, description: "Coordinación con ENAP para recursos o destinación", responsible: "JEMAT", deadline: "Mes 9", status: "Pendiente", timeline: [9, 10], deadlineEndDate: new Date('2025-10-31'), finalDeliveryDate: null, comment: "" },
-            { id: 28, objectiveId: 2, description: "Coordinación con Oficina de Historia", responsible: "DIMAV", deadline: "Mes 10", status: "En Progreso", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
-            { id: 29, objectiveId: 2, description: "Salida del SAP", responsible: "DIMAV", deadline: "Mes 10", status: "Pendiente", timeline: [10, 11], deadlineEndDate: new Date('2025-11-30'), finalDeliveryDate: null, comment: "" },
-            { id: 30, objectiveId: 2, description: "Acta de cumplimiento de destinación final", responsible: "DIMAV", deadline: "Mes 11", status: "Pendiente", timeline: [11, 12], deadlineEndDate: new Date('2025-12-31'), finalDeliveryDate: null, comment: "" },
-        ];
-
-        // === Variables UI y de Gráficos ===
-        let statusChart, ganttChart;
-        let currentFilter = 'all';
-
-        const statusColors = { 'Pendiente': '#FBBF24', 'En Progreso': '#3B82F6', 'Completado': '#10B981' };
-        const objectiveColors = [ 'rgba(59, 130, 246, 0.7)', 'rgba(239, 68, 68, 0.7)' ];
-        const objectiveNames = { 1: "ARC 414", 2: "ARC 221" };
-
-        // === Funciones de Lógica (Firestore, LocalStorage, UI) ===
-
-        const convertTaskForFirestore = (task) => {
-            return {
-                ...task,
-                deadlineEndDate: task.deadlineEndDate instanceof Date ? task.deadlineEndDate.toISOString() : task.deadlineEndDate,
-                finalDeliveryDate: task.finalDeliveryDate instanceof Date ? task.finalDeliveryDate.toISOString() : task.finalDeliveryDate
-            };
-        };
-        
-        async function saveTasksToFirestore() {
-            if (!db) {
-                alert("⚠️ Error: Firebase no está inicializado. No se puede guardar en la nube.");
-                return;
-            }
-            const button = document.getElementById('save-cloud-btn');
-            button.disabled = true;
-            button.innerText = "Guardando...";
-
-            try {
-                const batch = db.batch();
-                const colRef = db.collection("tasks");
-
-                // Opcional: Borrar documentos antiguos antes de guardar los nuevos
-                const snapshot = await colRef.get();
-                snapshot.forEach(doc => batch.delete(doc.ref));
-
-                // Añadir cada tarea actual al batch
-                tasksData.forEach(task => {
-                    const docRef = colRef.doc(String(task.id)); // Usar ID de la tarea para el documento
-                    batch.set(docRef, convertTaskForFirestore(task));
+    async function loadTasksFromFirestore() {
+        if (!db) {
+            console.warn("Firebase no disponible, se usarán los datos locales por defecto.");
+            return;
+        }
+        try {
+            const snapshot = await db.collection("tasks").get();
+            if (!snapshot.empty) {
+                const loadedTasks = [];
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.deadlineEndDate) data.deadlineEndDate = new Date(data.deadlineEndDate);
+                    if (data.finalDeliveryDate) data.finalDeliveryDate = new Date(data.finalDeliveryDate);
+                    loadedTasks.push(data);
                 });
+                tasksData = loadedTasks.sort((a, b) => a.id - b.id);
+                console.log("Tareas cargadas exitosamente desde Firestore.");
+            } else {
+                console.log("No se encontraron tareas en Firestore. Se usarán los datos locales.");
+            }
+        } catch (error) {
+            console.error("Error al cargar tareas desde Firestore:", error);
+        }
+    }
 
-                await batch.commit();
-                alert("✅ ¡Éxito! El progreso ha sido guardado en la nube.");
+    function saveProgressLocal() {
+        localStorage.setItem('tasksData', JSON.stringify(tasksData));
+        alert('✅ Progreso guardado en este navegador.');
+    }
+
+    function loadProgressLocal() {
+        const savedData = localStorage.getItem('tasksData');
+        if (savedData) {
+            try {
+                const parsedData = JSON.parse(savedData);
+                parsedData.forEach(task => {
+                    if (task.deadlineEndDate) task.deadlineEndDate = new Date(task.deadlineEndDate);
+                    if (task.finalDeliveryDate) task.finalDeliveryDate = new Date(task.finalDeliveryDate);
+                });
+                tasksData = parsedData;
+                console.log("Progreso local cargado.");
             } catch (e) {
-                console.error("Error al guardar en Firestore:", e);
-                alert("❌ Error al guardar en la nube. Revisa la consola para más detalles.");
-            } finally {
-                button.disabled = false;
-                button.innerText = "Guardar en la Nube";
+                console.error("Error al cargar el progreso local:", e);
             }
         }
+    }
 
-        async function loadTasksFromFirestore() {
-            if (!db) {
-                console.warn("Firebase no disponible, se usarán los datos locales por defecto.");
-                return;
-            }
-            try {
-                const snapshot = await db.collection("tasks").get();
-                if (!snapshot.empty) {
-                    const loadedTasks = [];
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        if (data.deadlineEndDate) data.deadlineEndDate = new Date(data.deadlineEndDate);
-                        if (data.finalDeliveryDate) data.finalDeliveryDate = new Date(data.finalDeliveryDate);
-                        loadedTasks.push(data);
-                    });
-                    tasksData = loadedTasks.sort((a, b) => a.id - b.id);
-                    console.log("Tareas cargadas exitosamente desde Firestore.");
-                } else {
-                    console.log("No se encontraron tareas en Firestore. Se usarán los datos locales.");
-                }
-            } catch (error) {
-                console.error("Error al cargar tareas desde Firestore:", error);
-            }
+    const getStatusCounts = () => {
+        const counts = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+        tasksData.forEach(task => { counts[task.status] = (counts[task.status] || 0) + 1; });
+        return counts;
+    };
+    const getDelayStatus = (task) => {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (task.status === 'Completado') {
+            const delivery = task.finalDeliveryDate ? new Date(task.finalDeliveryDate) : null;
+            const deadline = new Date(task.deadlineEndDate);
+            if (delivery && delivery > deadline) return `<span class="text-orange-500 font-semibold">Entregado tarde</span>`;
+            return `<span class="text-green-500 font-semibold">Completado a tiempo</span>`;
         }
-
-        function saveProgressLocal() {
-            localStorage.setItem('tasksData', JSON.stringify(tasksData));
-            alert('✅ Progreso guardado en este navegador.');
+        if (today > new Date(task.deadlineEndDate)) {
+            return `<span class="text-red-500 font-semibold">Atrasada</span>`;
         }
-
-        function loadProgressLocal() {
-            const savedData = localStorage.getItem('tasksData');
-            if (savedData) {
-                try {
-                    const parsedData = JSON.parse(savedData);
-                    // Convertir fechas de string a objeto Date
-                    parsedData.forEach(task => {
-                        if (task.deadlineEndDate) task.deadlineEndDate = new Date(task.deadlineEndDate);
-                        if (task.finalDeliveryDate) task.finalDeliveryDate = new Date(task.finalDeliveryDate);
-                    });
-                    tasksData = parsedData;
-                    console.log("Progreso local cargado.");
-                } catch (e) {
-                    console.error("Error al cargar el progreso local:", e);
-                }
-            }
-        }
-
-        // --- El resto de tus funciones de renderizado y UI (sin cambios) ---
-        const getStatusCounts = () => {
-            const counts = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
-            tasksData.forEach(task => { counts[task.status] = (counts[task.status] || 0) + 1; });
-            return counts;
-        };
-        const getDelayStatus = (task) => {
-            const now = new Date();
-            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            if (task.status === 'Completado') {
-                const delivery = task.finalDeliveryDate ? new Date(task.finalDeliveryDate) : null;
-                const deadline = new Date(task.deadlineEndDate);
-                if (delivery && delivery > deadline) return `<span class="text-orange-500 font-semibold">Entregado tarde</span>`;
-                return `<span class="text-green-500 font-semibold">Completado a tiempo</span>`;
-            }
-            if (today > new Date(task.deadlineEndDate)) {
-                return `<span class="text-red-500 font-semibold">Atrasada</span>`;
-            }
-            return `<span class="text-gray-500 font-semibold">A tiempo</span>`;
-        };
-        const updateControlBoxes = () => {
-            const counts = getStatusCounts();
-            document.getElementById('pending-count').innerText = counts['Pendiente'];
-            document.getElementById('progress-count').innerText = counts['En Progreso'];
-            document.getElementById('completed-count').innerText = counts['Completado'];
-        };
-        const groupTasksByResponsible = () => {
-            const summary = {};
-            tasksData.forEach(task => {
-                const names = task.responsible.split(' y '); 
-                names.forEach(name => {
-                    const trimmedName = name.trim();
-                    if (!summary[trimmedName]) summary[trimmedName] = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
-                    summary[trimmedName][task.status]++;
-                });
+        return `<span class="text-gray-500 font-semibold">A tiempo</span>`;
+    };
+    const updateControlBoxes = () => {
+        const counts = getStatusCounts();
+        document.getElementById('pending-count').innerText = counts['Pendiente'];
+        document.getElementById('progress-count').innerText = counts['En Progreso'];
+        document.getElementById('completed-count').innerText = counts['Completado'];
+    };
+    const groupTasksByResponsible = () => {
+        const summary = {};
+        tasksData.forEach(task => {
+            const names = task.responsible.split(' y '); 
+            names.forEach(name => {
+                const trimmedName = name.trim();
+                if (!summary[trimmedName]) summary[trimmedName] = { 'Pendiente': 0, 'En Progreso': 0, 'Completado': 0 };
+                summary[trimmedName][task.status]++;
             });
-            return summary;
-        };
-        const renderParticipantCards = () => {
-            const container = document.getElementById('participant-summary-container');
-            container.innerHTML = '';
-            const groupedTasks = groupTasksByResponsible();
-            for (const name in groupedTasks) {
-                const data = groupedTasks[name];
-                const card = document.createElement('div');
-                card.className = "participant-card p-6 bg-white rounded-lg shadow-md flex flex-col items-center";
-                card.innerHTML = `<h4 class="font-bold text-xl mb-4 text-center w-full">${name}</h4>
-                    <div class="text-sm text-gray-700 w-full text-center">
-                        <p class="font-semibold text-yellow-600">Pendientes: ${data['Pendiente']}</p>
-                        <p class="font-semibold text-blue-600">En Progreso: ${data['En Progreso']}</p>
-                        <p class="font-semibold text-green-600">Completadas: ${data['Completado']}</p>
-                    </div>`;
-                container.appendChild(card);
-            }
-        };
-        const renderTable = () => {
-            const tableBody = document.getElementById('task-table-body');
-            tableBody.innerHTML = '';
-            const filteredTasks = tasksData.filter(task => currentFilter === 'all' || task.objectiveId == currentFilter);
-            filteredTasks.forEach(task => {
-                const row = document.createElement('tr');
-                row.className = 'border-b hover:bg-gray-50';
-                const statusSelect = `<select data-id="${task.id}" class="status-select bg-transparent rounded p-1 border">
-                        <option value="Pendiente" ${task.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
-                        <option value="En Progreso" ${task.status === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
-                        <option value="Completado" ${task.status === 'Completado' ? 'selected' : ''}>Completado</option>
-                    </select>`;
-                const formattedDate = task.finalDeliveryDate ? (new Date(task.finalDeliveryDate)).toISOString().split('T')[0] : '';
-                row.innerHTML = `
-                    <td class="py-3 px-4">${task.description}</td>
-                    <td class="py-3 px-4">${task.responsible}</td>
-                    <td class="py-3 px-4">${task.deadline}</td>
-                    <td class="py-3 px-4"><input type="date" value="${formattedDate}" data-id="${task.id}" class="date-input rounded p-1 border"></td>
-                    <td class="py-3 px-4">${statusSelect}</td>
-                    <td class="py-3 px-4"><div class="w-4 h-4 rounded-full mx-auto" style="background-color: ${statusColors[task.status]}"></div></td>
-                    <td class="py-3 px-4 deadline-status">${getDelayStatus(task)}</td>
-                    <td class="py-3 px-4"><div contenteditable="true" data-id="${task.id}" class="comment-field rounded p-1 border min-w-[150px] min-h-[50px]">${task.comment}</div></td>`;
-                tableBody.appendChild(row);
-            });
-            document.querySelectorAll('.status-select').forEach(select => {
-                select.addEventListener('change', (e) => {
-                    const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
-                    if (task) {
-                        task.status = e.target.value;
-                        if (task.status === 'Completado' && !task.finalDeliveryDate) task.finalDeliveryDate = new Date();
-                        if (task.status !== 'Completado') task.finalDeliveryDate = null;
-                        renderAll();
-                    }
-                });
-            });
-            document.querySelectorAll('.date-input').forEach(input => {
-                input.addEventListener('change', (e) => {
-                    const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
-                    if (task) task.finalDeliveryDate = e.target.value ? new Date(e.target.value) : null;
+        });
+        return summary;
+    };
+    const renderParticipantCards = () => {
+        const container = document.getElementById('participant-summary-container');
+        container.innerHTML = '';
+        const groupedTasks = groupTasksByResponsible();
+        for (const name in groupedTasks) {
+            const data = groupedTasks[name];
+            const card = document.createElement('div');
+            card.className = "participant-card p-6 bg-white rounded-lg shadow-md flex flex-col items-center";
+            card.innerHTML = `<h4 class="font-bold text-xl mb-4 text-center w-full">${name}</h4>
+                <div class="text-sm text-gray-700 w-full text-center">
+                    <p class="font-semibold text-yellow-600">Pendientes: ${data['Pendiente']}</p>
+                    <p class="font-semibold text-blue-600">En Progreso: ${data['En Progreso']}</p>
+                    <p class="font-semibold text-green-600">Completadas: ${data['Completado']}</p>
+                </div>`;
+            container.appendChild(card);
+        }
+    };
+    const renderTable = () => {
+        const tableBody = document.getElementById('task-table-body');
+        tableBody.innerHTML = '';
+        const filteredTasks = tasksData.filter(task => currentFilter === 'all' || task.objectiveId == currentFilter);
+        filteredTasks.forEach(task => {
+            const row = document.createElement('tr');
+            row.className = 'border-b hover:bg-gray-50';
+            const statusSelect = `<select data-id="${task.id}" class="status-select bg-transparent rounded p-1 border">
+                    <option value="Pendiente" ${task.status === 'Pendiente' ? 'selected' : ''}>Pendiente</option>
+                    <option value="En Progreso" ${task.status === 'En Progreso' ? 'selected' : ''}>En Progreso</option>
+                    <option value="Completado" ${task.status === 'Completado' ? 'selected' : ''}>Completado</option>
+                </select>`;
+            const formattedDate = task.finalDeliveryDate ? (new Date(task.finalDeliveryDate)).toISOString().split('T')[0] : '';
+            row.innerHTML = `
+                <td class="py-3 px-4">${task.description}</td>
+                <td class="py-3 px-4">${task.responsible}</td>
+                <td class="py-3 px-4">${task.deadline}</td>
+                <td class="py-3 px-4"><input type="date" value="${formattedDate}" data-id="${task.id}" class="date-input rounded p-1 border"></td>
+                <td class="py-3 px-4">${statusSelect}</td>
+                <td class="py-3 px-4"><div class="w-4 h-4 rounded-full mx-auto" style="background-color: ${statusColors[task.status]}"></div></td>
+                <td class="py-3 px-4 deadline-status">${getDelayStatus(task)}</td>
+                <td class="py-3 px-4"><div contenteditable="true" data-id="${task.id}" class="comment-field rounded p-1 border min-w-[150px] min-h-[50px]">${task.comment}</div></td>`;
+            tableBody.appendChild(row);
+        });
+        document.querySelectorAll('.status-select').forEach(select => {
+            select.addEventListener('change', (e) => {
+                const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
+                if (task) {
+                    task.status = e.target.value;
+                    if (task.status === 'Completado' && !task.finalDeliveryDate) task.finalDeliveryDate = new Date();
+                    if (task.status !== 'Completado') task.finalDeliveryDate = null;
                     renderAll();
-                });
-            });
-            document.querySelectorAll('.comment-field').forEach(field => {
-                field.addEventListener('blur', (e) => {
-                    const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
-                    if (task) task.comment = e.target.innerText;
-                });
-            });
-        };
-        const createStatusChart = () => {
-            const ctx = document.getElementById('statusChart').getContext('2d');
-            const counts = getStatusCounts();
-            statusChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Pendiente', 'En Progreso', 'Completado'], datasets: [{ data: [counts['Pendiente'], counts['En Progreso'], counts['Completado']], backgroundColor: [statusColors['Pendiente'], statusColors['En Progreso'], statusColors['Completado']], borderColor: '#FFFFFF', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
-        };
-        const createGanttChart = () => {
-            const ctx = document.getElementById('ganttChart').getContext('2d');
-            const filteredTasks = tasksData.filter(task => currentFilter === 'all' || task.objectiveId == currentFilter);
-            if (ganttChart) ganttChart.destroy();
-            ganttChart = new Chart(ctx, { type: 'bar', data: { labels: filteredTasks.map(t => t.description.length > 40 ? t.description.substring(0, 40) + '...' : t.description), datasets: [{ label: 'Meses', data: filteredTasks.map(t => t.timeline), backgroundColor: filteredTasks.map(t => objectiveColors[t.objectiveId-1]), borderWidth: 1, barPercentage: 0.6, categoryPercentage: 0.8, borderSkipped: false, }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, title: { display: true, text: 'Meses del Año' }, ticks: { stepSize: 1, callback: (v) => ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][Math.floor(v)] } }, y: { ticks: { autoSkip: false, font: { size: 10 } } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${filteredTasks[c.dataIndex].description} | Plazo: ${filteredTasks[c.dataIndex].deadline}` } } } } });
-        };
-        const updateCharts = () => {
-            if (!statusChart) return;
-            const counts = getStatusCounts();
-            statusChart.data.datasets[0].data = [counts['Pendiente'], counts['En Progreso'], counts['Completado']];
-            statusChart.update();
-            createGanttChart(); // Re-crear Gantt para reflejar filtros
-        };
-        const renderAll = () => {
-            renderTable();
-            updateControlBoxes();
-            updateCharts();
-            renderParticipantCards();
-        };
-        const groupTasksByObjective = () => {
-            const grouped = {};
-            tasksData.forEach(task => {
-                const objectiveName = objectiveNames[task.objectiveId];
-                if (!grouped[objectiveName]) grouped[objectiveName] = [];
-                grouped[objectiveName].push(task);
-            });
-            return grouped;
-        };
-        const generatePdf = async () => { /* Tu función de PDF original aquí, sin cambios */ };
-        function openEditModal() {
-            const tasksJsonEditor = document.getElementById('tasks-json-editor');
-            tasksJsonEditor.value = JSON.stringify(tasksData, (key, value) => (value instanceof Date) ? value.toISOString() : value, 2);
-            document.getElementById('edit-modal').classList.remove('hidden');
-        }
-        function closeEditModal() { document.getElementById('edit-modal').classList.add('hidden'); }
-        
-        // === Evento Principal de Carga del DOM ===
-        document.addEventListener('DOMContentLoaded', async () => {
-            loadProgressLocal(); // Carga primero lo local para una vista rápida
-            await loadTasksFromFirestore(); // Intenta sobreescribir con datos de la nube
-            
-            renderAll(); // Renderiza toda la UI con los datos finales
-
-            // Listeners de botones y filtros
-            document.querySelectorAll('.filter-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    currentFilter = e.target.dataset.filter;
-                    document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.replace('bg-blue-600', 'bg-gray-200') || btn.classList.replace('text-white', 'text-gray-800'));
-                    e.target.classList.replace('bg-gray-200', 'bg-blue-600');
-                    e.target.classList.replace('text-gray-800', 'text-white');
-                    renderAll();
-                });
-            });
-            document.getElementById('generate-pdf-btn').addEventListener('click', generatePdf);
-            document.getElementById('modify-schedule-btn').addEventListener('click', openEditModal);
-            document.getElementById('save-progress-btn').addEventListener('click', saveProgressLocal);
-            document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
-            document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
-            document.getElementById('save-changes-btn').addEventListener('click', () => {
-                const editor = document.getElementById('tasks-json-editor');
-                const errorMsg = document.getElementById('edit-error-message');
-                try {
-                    const newTasks = JSON.parse(editor.value);
-                    newTasks.forEach(t => { // Re-convertir fechas
-                        if (t.deadlineEndDate) t.deadlineEndDate = new Date(t.deadlineEndDate);
-                        if (t.finalDeliveryDate) t.finalDeliveryDate = new Date(t.finalDeliveryDate);
-                    });
-                    tasksData = newTasks;
-                    errorMsg.classList.add('hidden');
-                    closeEditModal();
-                    renderAll();
-                } catch (e) {
-                    errorMsg.innerText = "Error: El formato JSON no es válido.";
-                    errorMsg.classList.remove('hidden');
-                    console.error("Error al parsear JSON:", e);
                 }
             });
         });
-    </script>
+        document.querySelectorAll('.date-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
+                if (task) task.finalDeliveryDate = e.target.value ? new Date(e.target.value) : null;
+                renderAll();
+            });
+        });
+        document.querySelectorAll('.comment-field').forEach(field => {
+            field.addEventListener('blur', (e) => {
+                const task = tasksData.find(t => t.id === parseInt(e.target.dataset.id));
+                if (task) task.comment = e.target.innerText;
+            });
+        });
+    };
+    const createStatusChart = () => {
+        if (statusChart) statusChart.destroy();
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        const counts = getStatusCounts();
+        statusChart = new Chart(ctx, { type: 'doughnut', data: { labels: ['Pendiente', 'En Progreso', 'Completado'], datasets: [{ data: [counts['Pendiente'], counts['En Progreso'], counts['Completado']], backgroundColor: [statusColors['Pendiente'], statusColors['En Progreso'], statusColors['Completado']], borderColor: '#FFFFFF', borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+    };
+    const createGanttChart = () => {
+        if (ganttChart) ganttChart.destroy();
+        const ctx = document.getElementById('ganttChart').getContext('2d');
+        const filteredTasks = tasksData.filter(task => currentFilter === 'all' || task.objectiveId == currentFilter);
+        ganttChart = new Chart(ctx, { type: 'bar', data: { labels: filteredTasks.map(t => t.description.length > 40 ? t.description.substring(0, 40) + '...' : t.description), datasets: [{ label: 'Meses', data: filteredTasks.map(t => t.timeline), backgroundColor: filteredTasks.map(t => objectiveColors[t.objectiveId-1]), borderWidth: 1, barPercentage: 0.6, categoryPercentage: 0.8, borderSkipped: false, }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, scales: { x: { beginAtZero: true, title: { display: true, text: 'Meses del Año' }, ticks: { stepSize: 1, callback: (v) => ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'][Math.floor(v)] } }, y: { ticks: { autoSkip: false, font: { size: 10 } } } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `${filteredTasks[c.dataIndex].description} | Plazo: ${filteredTasks[c.dataIndex].deadline}` } } } } });
+    };
+    const updateCharts = () => {
+        if (!statusChart) createStatusChart();
+        else {
+            const counts = getStatusCounts();
+            statusChart.data.datasets[0].data = [counts['Pendiente'], counts['En Progreso'], counts['Completado']];
+            statusChart.update();
+        }
+        createGanttChart(); // Siempre re-crear Gantt para reflejar filtros
+    };
+    const renderAll = () => {
+        renderTable();
+        updateControlBoxes();
+        updateCharts();
+        renderParticipantCards();
+    };
+    const groupTasksByObjective = () => { /* Tu función original aquí */ };
+    const generatePdf = async () => { /* Tu función de PDF original aquí */ };
+    function openEditModal() { /* Tu función original aquí */ }
+    function closeEditModal() { /* Tu función original aquí */ }
+    
+    // === Evento Principal de Carga del DOM ===
+    document.addEventListener('DOMContentLoaded', async () => {
+        loadProgressLocal(); 
+        await loadTasksFromFirestore(); 
+        
+        // ¡CORRECCIÓN! Llamamos a la creación de gráficas aquí, una sola vez.
+        createStatusChart();
+        createGanttChart();
+        
+        // Y luego renderizamos todo lo demás.
+        renderAll();
+
+        // Listeners de botones y filtros
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentFilter = e.target.dataset.filter;
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('bg-blue-600', 'text-white');
+                    btn.classList.add('bg-gray-200', 'text-gray-800');
+                });
+                e.target.classList.add('bg-blue-600', 'text-white');
+                e.target.classList.remove('bg-gray-200', 'text-gray-800');
+                renderAll();
+            });
+        });
+
+        document.getElementById('generate-pdf-btn').addEventListener('click', generatePdf);
+        document.getElementById('modify-schedule-btn').addEventListener('click', openEditModal);
+        document.getElementById('save-progress-btn').addEventListener('click', saveProgressLocal);
+        document.getElementById('save-cloud-btn').addEventListener('click', saveTasksToFirestore);
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditModal);
+        document.getElementById('save-changes-btn').addEventListener('click', () => {
+            const editor = document.getElementById('tasks-json-editor');
+            const errorMsg = document.getElementById('edit-error-message');
+            try {
+                const newTasks = JSON.parse(editor.value);
+                newTasks.forEach(t => { 
+                    if (t.deadlineEndDate) t.deadlineEndDate = new Date(t.deadlineEndDate);
+                    if (t.finalDeliveryDate) t.finalDeliveryDate = new Date(t.finalDeliveryDate);
+                });
+                tasksData = newTasks;
+                errorMsg.classList.add('hidden');
+                closeEditModal();
+                renderAll();
+            } catch (e) {
+                errorMsg.innerText = "Error: El formato JSON no es válido.";
+                errorMsg.classList.remove('hidden');
+                console.error("Error al parsear JSON:", e);
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
+
